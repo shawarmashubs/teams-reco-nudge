@@ -1,0 +1,1832 @@
+/* styles.css — Slack Aubergine, rebuilt against the shipped client.
+
+   Colour anchors come from the real Aubergine theme string:
+   #3F0E40 sidebar · #350D36 rail + top bar · #1164A3 selected row ·
+   #2BAC76 presence · #CD2553 mention badge.
+   Slack's marketing aubergine (#4A154B) is the logo colour, not the sidebar —
+   using it for chrome is the most common tell in a Slack replica.
+
+   Class names are frozen by CONTRACT.md §8. Nothing here renames them.
+
+     1  tokens              6  channel header      11  modals
+     2  reset + shell       7  messages            12  trace panel
+     3  top bar             8  ephemeral / Block Kit  13  eval console
+     4  rail                9  composer            14  responsive
+     5  sidebar            10  buttons
+*/
+
+/* ============================================================== 1  tokens */
+
+:root {
+  /* frozen by CONTRACT.md §8 */
+  --sk-aubergine: #3f0e40;
+  --sk-aubergine-dark: #350d36;
+  --sk-aubergine-hover: #4a154b;
+  --sk-active: #1164a3;
+  --sk-green: #007a5a;
+  --sk-green-hover: #148567;
+  --sk-text: #1d1c1d;
+  --sk-text-muted: #616061;
+  --sk-border: #dddddd;
+  --sk-bg: #ffffff;
+  --sk-ephemeral-bg: #fff8e6;
+  --sk-danger: #e01e5a;
+
+  /* derived, non-contract */
+  --sk-font: Lato, "Helvetica Neue", Arial, sans-serif;
+  --sk-mono: Monaco, Menlo, Consolas, "Courier New", monospace;
+
+  /* sidebar type is a warm lilac, not neutral white-alpha */
+  --sk-sb-text: #cfc3cf;
+  --sk-sb-glyph: #bcabbc;
+  --sk-sb-hover: rgba(255, 255, 255, 0.08);
+
+  --sk-presence: #2bac76;
+  --sk-badge: #cd2553;
+  --sk-link: #1264a3;
+  --sk-amber: #e8912d;
+  --sk-grey: #868686;
+  --sk-hover-bg: #f8f8f8;
+  --sk-line: #e8e8e8;
+  --sk-focus: #1d9bd1;
+  --sk-hairline: rgba(29, 28, 29, 0.3);
+
+  --sk-rail-w: 70px;
+  --sk-sidebar-w: 260px;
+  --sk-trace-w: 380px;
+
+  --sk-shadow-pop: 0 0 0 1px rgba(29, 28, 29, 0.13), 0 4px 12px rgba(0, 0, 0, 0.12);
+  --sk-shadow-modal: 0 18px 48px rgba(0, 0, 0, 0.35);
+}
+
+/* ====================================================== 2  reset + shell */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; margin: 0; }
+
+body {
+  font-family: var(--sk-font);
+  font-size: 15px;
+  line-height: 1.46667;
+  color: var(--sk-text);
+  background: var(--sk-aubergine);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+button {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Slack's focus ring is doubled so it survives both the white message pane and
+   the aubergine sidebar. */
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px #fff, 0 0 0 4px var(--sk-focus);
+  border-radius: 4px;
+}
+
+.sk-sprite { display: none; }
+
+.sk-icon {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  flex: none;
+  display: block;
+}
+
+.sk-app {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sk-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns:
+    var(--sk-rail-w) var(--sk-sidebar-w) minmax(400px, 1fr) var(--sk-trace-w);
+}
+
+/* ============================================================= 3  top bar */
+
+.sk-topbar {
+  flex: none;
+  height: 40px;
+  background: var(--sk-aubergine-dark);
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 732px) 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+}
+
+.sk-topbar-side {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sk-topbar-side-right { justify-content: flex-end; }
+
+.sk-top-icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  color: var(--sk-sb-text);
+}
+
+.sk-top-icon svg { width: 18px; height: 18px; fill: currentColor; }
+.sk-top-icon:hover { background: rgba(255, 255, 255, 0.1); }
+.sk-top-icon:disabled { opacity: 0.4; cursor: default; }
+.sk-top-icon:disabled:hover { background: none; }
+
+.sk-topbar-search {
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+}
+
+.sk-topbar-search:hover { background: rgba(255, 255, 255, 0.16); }
+
+.sk-topbar-search-icon {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+  flex: none;
+}
+
+/* ================================================================ 4  rail */
+
+.sk-rail {
+  background: var(--sk-aubergine-dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 12px;
+  gap: 4px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sk-rail-ws {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--sk-aubergine);
+  font-size: 17px;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+  margin-bottom: 10px;
+  box-shadow: 0 0 0 2px var(--sk-aubergine-dark), 0 0 0 4px #fff;
+}
+
+.sk-rail-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+}
+
+/* Rail items are transparent stacks — a 20px glyph over an 11px label. Slack
+   never fills the whole tile; only the glyph gets the active pill. */
+.sk-rail-btn {
+  width: 58px;
+  padding: 5px 0 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border-radius: 8px;
+  color: var(--sk-sb-text);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.sk-rail-glyph {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+}
+
+.sk-rail-glyph svg { width: 20px; height: 20px; fill: currentColor; }
+.sk-rail-btn:hover { background: rgba(255, 255, 255, 0.06); }
+.sk-rail-btn.is-active { color: #fff; }
+.sk-rail-btn.is-active .sk-rail-glyph { background: rgba(255, 255, 255, 0.16); }
+
+.sk-rail-foot { margin-top: auto; }
+
+.sk-rail-avatar {
+  position: relative;
+  display: block;
+  border-radius: 8px;
+}
+
+.sk-rail-avatar .sk-msg-avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+.sk-rail-avatar .sk-presence {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  border-color: var(--sk-aubergine-dark);
+}
+
+.sk-presence {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--sk-aubergine);
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--sk-sb-glyph);
+  flex: none;
+}
+
+.sk-presence.is-active {
+  background: var(--sk-presence);
+  box-shadow: none;
+}
+
+/* ============================================================= 5  sidebar */
+
+.sk-sidebar {
+  background: var(--sk-aubergine);
+  color: var(--sk-sb-text);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.sk-workspace {
+  flex: none;
+  height: 49px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sk-ws-btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 4px 0;
+  border-radius: 6px;
+  color: #fff;
+}
+
+.sk-ws-name {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.33;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sk-ws-caret { width: 14px; height: 14px; flex: none; }
+.sk-ws-btn:hover { background: var(--sk-sb-hover); }
+
+.sk-ws-compose {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--sk-aubergine);
+  display: grid;
+  place-items: center;
+}
+
+.sk-ws-compose svg { width: 18px; height: 18px; fill: currentColor; }
+.sk-ws-compose:hover { background: #f0f0f0; }
+
+.sk-sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 0 24px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.sk-sidebar-scroll::-webkit-scrollbar { width: 8px; }
+
+.sk-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+/* Every sidebar row — quick nav, section header, channel, DM, add — shares one
+   28px geometry so all the labels land on a single left edge. */
+.sk-sb-item,
+.sk-channel,
+.sk-sb-add,
+.sk-section-title {
+  width: 100%;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  color: var(--sk-sb-text);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.33;
+  text-align: left;
+  border-radius: 0;
+}
+
+.sk-sb-item:hover,
+.sk-channel:hover,
+.sk-sb-add:hover,
+.sk-section-title:hover { background: var(--sk-aubergine-dark); }
+
+.sk-sb-glyph,
+.sk-ch-glyph,
+.sk-sb-add-glyph,
+.sk-dm-avatar {
+  width: 20px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--sk-sb-glyph);
+  font-size: 15px;
+}
+
+.sk-sb-glyph svg,
+.sk-ch-glyph svg { width: 16px; height: 16px; fill: currentColor; }
+.sk-sb-add-glyph svg { width: 14px; height: 14px; fill: currentColor; }
+
+.sk-ch-name,
+.sk-sb-item > span:not([class]) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sk-ch-note {
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 11px;
+  opacity: 0.55;
+  white-space: nowrap;
+}
+
+.sk-section { margin-top: 12px; }
+
+.sk-section-title { font-size: 15px; font-weight: 700; }
+
+.sk-twisty { width: 12px; height: 12px; }
+
+/* Selected is blue + white at normal weight. Bold belongs to unread; bolding
+   the selected row would destroy that signal. */
+.sk-channel.is-active,
+.sk-channel.is-active:hover {
+  background: var(--sk-active);
+  color: #fff;
+  font-weight: 400;
+}
+
+.sk-channel.is-active .sk-ch-glyph { color: rgba(255, 255, 255, 0.9); }
+
+.sk-channel.is-unread { color: #fff; font-weight: 900; }
+.sk-channel.is-unread .sk-ch-glyph { color: #fff; }
+
+.sk-ch-badge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--sk-badge);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.sk-dm-avatar { position: relative; width: 20px; height: 20px; }
+
+.sk-dm-avatar .sk-presence {
+  position: absolute;
+  right: -4px;
+  bottom: -3px;
+  width: 11px;
+  height: 11px;
+}
+
+.sk-msg-avatar.is-small {
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+  border-radius: 3px;
+}
+
+.sk-sidebar-note {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 16px 16px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.sk-sidebar-note-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--sk-presence);
+}
+
+/* ====================================================== 6  channel header */
+
+.sk-main {
+  background: var(--sk-bg);
+  display: flex;
+  flex-direction: column;
+  /* Grid items default to min-height: auto, so this column would grow to fit the
+     whole transcript and push the composer off screen. Zero lets .sk-messages
+     scroll instead. */
+  min-width: 0;
+  min-height: 0;
+}
+
+.sk-chan-header {
+  flex: none;
+  height: 49px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 0 20px;
+  border-bottom: 1px solid var(--sk-border);
+}
+
+.sk-chan-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sk-chan-name {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 300px;
+  padding: 2px 6px 2px 2px;
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.33;
+}
+
+.sk-chan-name > span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sk-chan-glyph {
+  color: var(--sk-text-muted);
+  font-weight: 700;
+  margin-right: 2px;
+  display: grid;
+  place-items: center;
+}
+
+.sk-chan-glyph svg { width: 16px; height: 16px; fill: currentColor; }
+.sk-chan-caret { width: 14px; height: 14px; color: var(--sk-text-muted); }
+.sk-chan-name:hover { background: var(--sk-hover-bg); }
+
+.sk-chan-members {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  flex: none;
+  padding: 0 8px 0 4px;
+  border: 1px solid var(--sk-border);
+  border-radius: 12px;
+}
+
+.sk-chan-members:hover { background: var(--sk-hover-bg); }
+.sk-chan-count { font-size: 13px; color: var(--sk-text-muted); }
+
+.sk-facepile { display: flex; }
+
+.sk-msg-avatar.is-face {
+  width: 20px;
+  height: 20px;
+  font-size: 9px;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1.5px #fff;
+}
+
+.sk-msg-avatar.is-face + .sk-msg-avatar.is-face { margin-left: -5px; }
+
+.sk-chan-topic {
+  min-width: 0;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--sk-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sk-chan-topic:hover { background: var(--sk-hover-bg); }
+
+.sk-chan-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.sk-chan-icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  color: var(--sk-text-muted);
+}
+
+.sk-chan-icon svg { width: 18px; height: 18px; fill: currentColor; }
+.sk-chan-icon:hover { background: var(--sk-hover-bg); color: var(--sk-text); }
+
+.sk-chan-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--sk-border);
+  margin: 0 2px;
+}
+
+/* =========================================================== 7  messages */
+
+.sk-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Slack's transcript rests on the composer — a short channel does not leave a
+     field of white above the first message.
+     The push comes from an auto margin on the first child, not
+     justify-content: flex-end, which makes overflow above the fold
+     unreachable by scrolling. */
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 8px;
+}
+
+.sk-messages > * { flex: none; }
+.sk-messages > :first-child { margin-top: auto; }
+
+.sk-msg,
+.sk-ephemeral {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  padding: 8px 20px;
+}
+
+.sk-msg:hover,
+.sk-ephemeral:hover { background: var(--sk-hover-bg); }
+
+.sk-msg.is-grouped { padding-top: 3px; padding-bottom: 3px; }
+
+.sk-msg-avatar {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  user-select: none;
+}
+
+/* Slack rounds app icons itself; a bot gets exactly the same square as a person. */
+.sk-msg-avatar.is-app { border-radius: 4px; }
+
+.sk-msg-gutter {
+  width: 36px;
+  flex: none;
+  padding-top: 3px;
+  text-align: right;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--sk-text-muted);
+  opacity: 0;
+}
+
+.sk-msg:hover .sk-msg-gutter { opacity: 1; }
+
+.sk-msg-body { min-width: 0; flex: 1; }
+
+.sk-msg-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 1px;
+}
+
+.sk-msg-author {
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.46667;
+}
+
+.sk-msg-time {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--sk-text-muted);
+}
+
+.sk-msg-text {
+  font-size: 15px;
+  line-height: 1.46667;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* Floating hover toolbar, overlapping the row's top edge. */
+.sk-msg-tools {
+  position: absolute;
+  top: -14px;
+  right: 20px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+  background: #fff;
+  border: 1px solid var(--sk-border);
+  border-radius: 8px;
+  box-shadow: var(--sk-shadow-pop);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 100ms;
+}
+
+.sk-msg:hover .sk-msg-tools,
+.sk-ephemeral:hover .sk-msg-tools,
+.sk-msg-tools:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sk-msg-tool {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  color: var(--sk-text-muted);
+}
+
+.sk-msg-tool svg { width: 18px; height: 18px; fill: currentColor; }
+.sk-msg-tool:hover { background: var(--sk-hover-bg); color: var(--sk-text); }
+
+/* channel intro — the block that caps the top of every Slack transcript */
+/* Carries the transcript's top breathing room. It can't live on .sk-messages:
+   scroll padding shifts the sticky origin, and the date pill would then pin
+   20px low with a gap for messages to show through. */
+.sk-intro { padding: 24px 20px 12px; }
+
+.sk-intro-glyph {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--sk-aubergine);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.sk-intro-glyph svg { width: 22px; height: 22px; fill: currentColor; }
+
+.sk-intro-title {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.sk-intro-text {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 15px;
+  line-height: 1.46667;
+  color: var(--sk-text-muted);
+}
+
+.sk-intro-text strong { color: var(--sk-text); font-weight: 700; }
+
+.sk-intro-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.sk-intro-actions .sk-btn { min-height: 28px; }
+.sk-intro-actions .sk-btn svg { width: 15px; height: 15px; fill: currentColor; }
+
+.sk-intro-note {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 13px;
+  line-height: 1.38;
+  color: var(--sk-text-muted);
+}
+
+.sk-intro-note .sk-sidebar-note-dot.is-off { background: var(--sk-grey); }
+
+/* date divider — a sticky pill sitting on a hairline.
+   Sticky is scoped to .sk-day-group so the next day's pill pushes the previous
+   one out of view instead of both pinning to top: 0. The band is opaque so
+   messages scrolling under a stuck pill are covered, not crossed out by it. */
+.sk-day-group { display: flex; flex-direction: column; }
+
+.sk-day {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  padding: 8px 20px;
+  background: var(--sk-bg);
+}
+
+.sk-day::before {
+  content: "";
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: 50%;
+  height: 1px;
+  background: var(--sk-border);
+}
+
+.sk-day-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 16px;
+  border: 1px solid var(--sk-border);
+  border-radius: 24px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sk-text);
+}
+
+.sk-day-pill:hover { background: var(--sk-hover-bg); }
+.sk-day-caret { width: 12px; height: 12px; color: var(--sk-text-muted); }
+
+/* reactions */
+.sk-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.sk-reaction {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: rgba(29, 28, 29, 0.04);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sk-text-muted);
+}
+
+.sk-reaction:hover {
+  background: rgba(29, 28, 29, 0.08);
+  border-color: var(--sk-border);
+}
+
+.sk-reaction-emoji { font-size: 15px; line-height: 1; }
+
+.sk-reaction.is-mine {
+  background: #e8f5fa;
+  border-color: var(--sk-link);
+  color: var(--sk-link);
+}
+
+.sk-reaction-add { padding: 0 7px; opacity: 0; }
+.sk-reaction-add svg { width: 15px; height: 15px; fill: currentColor; }
+.sk-msg:hover .sk-reaction-add { opacity: 1; }
+
+/* thread bar */
+.sk-msg-thread {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  max-width: 100%;
+}
+
+.sk-msg-thread:hover {
+  background: #fff;
+  border-color: var(--sk-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.sk-msg-thread .sk-msg-avatar.is-face { box-shadow: none; }
+
+.sk-thread-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sk-link);
+}
+
+.sk-thread-last {
+  min-width: 0;
+  font-size: 13px;
+  color: var(--sk-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sk-thread-caret {
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  color: var(--sk-text-muted);
+  opacity: 0;
+}
+
+.sk-msg-thread:hover .sk-thread-caret { opacity: 1; }
+
+/* ============================================ 8  ephemeral / Block Kit */
+
+/* A Slack ephemeral is an ordinary message row — no tint, no border, no
+   rounding. The APP badge and the "Only visible to you" footer are the entire
+   difference. The one sanctioned way to make blocks stand out is the
+   attachment bar, so the body carries that instead of the row. */
+.sk-ephemeral { align-items: flex-start; }
+
+.sk-eph-main { min-width: 0; flex: 1; }
+
+.sk-eph-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.sk-eph-bot { font-size: 15px; font-weight: 900; }
+
+.sk-eph-head .sk-pill {
+  background: rgba(29, 28, 29, 0.13);
+  color: var(--sk-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 1px 3px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.sk-eph-body {
+  border-left: 4px solid var(--sk-aubergine);
+  border-radius: 0 4px 4px 0;
+  padding: 2px 0 2px 12px;
+}
+
+.sk-bk-section {
+  font-size: 15px;
+  line-height: 1.46667;
+  overflow-wrap: break-word;
+}
+
+/* Probe banner. Amber rather than aubergine: this is the agent flagging its own
+   behaviour, not another instance of the usual prompt. */
+.sk-eph-probe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border-left: 3px solid var(--sk-amber);
+  border-radius: 0 4px 4px 0;
+  background: var(--sk-ephemeral-bg);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--sk-text-muted);
+}
+
+.sk-eph-probe-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #8a5300;
+}
+
+.sk-bk-section.is-resolved { color: var(--sk-text-muted); }
+
+.sk-eph-quote {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-left: 3px solid var(--sk-border);
+  border-radius: 0 4px 4px 0;
+  background: var(--sk-ephemeral-bg);
+  font-size: 15px;
+  line-height: 1.46667;
+}
+
+.sk-bk-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.33;
+  color: var(--sk-text-muted);
+}
+
+.sk-bk-tag { font-weight: 700; }
+.sk-bk-dot { opacity: 0.6; }
+
+.sk-bk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.sk-eph-only-you {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.sk-eph-eye { width: 14px; height: 14px; }
+
+/* =========================================================== 9  composer */
+
+.sk-composer {
+  flex: none;
+  padding: 0 20px 24px;
+}
+
+.sk-composer-box {
+  border: 1px solid var(--sk-border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.sk-composer-box:focus-within { border-color: var(--sk-hairline); }
+
+.sk-composer-format,
+.sk-composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 40px;
+  padding: 0 6px;
+}
+
+.sk-composer-format { border-bottom: 1px solid var(--sk-line); }
+
+.sk-fmt {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  color: var(--sk-text-muted);
+}
+
+.sk-fmt svg { width: 18px; height: 18px; fill: currentColor; }
+.sk-fmt:hover { background: var(--sk-hover-bg); color: var(--sk-text); }
+
+.sk-fmt-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--sk-border);
+  margin: 0 5px;
+}
+
+.sk-composer-input {
+  display: block;
+  width: 100%;
+  border: 0;
+  outline: none;
+  resize: none;
+  padding: 9px 12px;
+  font-size: 15px;
+  line-height: 1.46667;
+  max-height: 160px;
+  overflow-y: auto;
+  background: transparent;
+}
+
+.sk-composer-input::placeholder { color: var(--sk-grey); }
+
+/* Slack keeps the send button clickable when the box is empty; it just loses
+   its fill. Disabling it is the tell — and the test harness clicks it directly. */
+.sk-send {
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--sk-grey);
+}
+
+.sk-send svg { width: 17px; height: 17px; fill: currentColor; }
+.sk-send.is-ready { background: var(--sk-green); color: #fff; }
+.sk-send.is-ready:hover { background: var(--sk-green-hover); }
+
+/* =========================================================== 10  buttons */
+
+.sk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px 1px;
+  border: 1px solid var(--sk-hairline);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--sk-text);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.sk-btn:hover { background: var(--sk-hover-bg); }
+.sk-btn:disabled { opacity: 0.5; cursor: default; }
+.sk-btn:disabled:hover { background: #fff; }
+
+.sk-btn-primary {
+  background: var(--sk-green);
+  border-color: transparent;
+  color: #fff;
+}
+
+.sk-btn-primary:hover { background: var(--sk-green-hover); }
+.sk-btn-primary:disabled:hover { background: var(--sk-green); }
+
+.sk-btn-danger {
+  background: var(--sk-danger);
+  border-color: transparent;
+  color: #fff;
+}
+
+.sk-btn-danger:hover { background: #c0163f; }
+
+/* Ghost keeps its contract name but is no longer borderless — a Slack
+   secondary button always has an outline. */
+.sk-btn-ghost { background: #fff; }
+
+/* Compact variant for the channel header, where 36px would blow the 49px bar. */
+.sk-btn-outline {
+  min-height: 26px;
+  padding: 0 10px 1px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ============================================================ 11  modals */
+
+.sk-modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(29, 28, 29, 0.7);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  animation: sk-fade 200ms ease-out;
+}
+
+@keyframes sk-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.sk-modal {
+  width: min(600px, 100%);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: var(--sk-shadow-modal);
+  overflow: hidden;
+}
+
+.sk-eval-modal { width: min(680px, 100%); }
+
+.sk-modal-head {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 24px 12px;
+}
+
+.sk-modal-title {
+  flex: 1;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.sk-modal-x {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  margin: -6px -8px 0 0;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  color: var(--sk-text-muted);
+}
+
+.sk-modal-x svg { width: 20px; height: 20px; fill: currentColor; }
+.sk-modal-x:hover { background: var(--sk-hover-bg); color: var(--sk-text); }
+
+.sk-modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 24px 20px;
+}
+
+/* Slack puts both modal buttons bottom-right, Cancel to the left of Submit. */
+.sk-modal-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 24px 20px;
+}
+
+.sk-modal-foot .sk-field-hint { margin: 0 auto 0 0; }
+
+.sk-field { margin-bottom: 16px; }
+
+.sk-field-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.33;
+}
+
+.sk-field-hint {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.38;
+  color: var(--sk-text-muted);
+}
+
+.sk-counter { text-align: right; }
+
+.sk-input,
+.sk-select,
+.sk-textarea {
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid var(--sk-hairline);
+  border-radius: 4px;
+  background: #fff;
+  font-size: 15px;
+  line-height: 1.46667;
+}
+
+.sk-textarea { resize: vertical; min-height: 88px; }
+
+/* The ~2s while the model writes. A moving shimmer rather than a spinner or a
+   greyed-out box, because the field is not disabled-and-finished, it is about to
+   fill. Reduced-motion falls back to the flat tint. */
+.sk-textarea.is-drafting {
+  background:
+    linear-gradient(90deg, var(--sk-hover-bg) 25%, #fff 50%, var(--sk-hover-bg) 75%)
+    0 0 / 400% 100%;
+  animation: sk-drafting 1.4s ease-in-out infinite;
+  color: var(--sk-text-muted);
+  cursor: progress;
+}
+
+@keyframes sk-drafting {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk-textarea.is-drafting { animation: none; background: var(--sk-hover-bg); }
+}
+
+/* Fixed by the client program, shown for confirmation only. Reads as a value,
+   not as a field the human is being invited to change. */
+.sk-input.is-locked {
+  background: var(--sk-hover-bg);
+  border-style: dashed;
+  color: var(--sk-text-muted);
+  font-weight: 700;
+  cursor: default;
+}
+
+.sk-input:focus,
+.sk-select:focus,
+.sk-textarea:focus {
+  outline: none;
+  border-color: var(--sk-link);
+  box-shadow: 0 0 0 1px var(--sk-link);
+}
+
+.sk-select {
+  appearance: none;
+  padding-right: 34px;
+  /* a thin chevron, not a CSS-gradient triangle */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%23616061' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+}
+
+.sk-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 4px;
+  border-left: 4px solid var(--sk-text-muted);
+  background: var(--sk-hover-bg);
+  font-size: 13px;
+  line-height: 1.38;
+}
+
+.sk-banner .sk-btn {
+  margin-left: auto;
+  min-height: 28px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sk-banner-warn {
+  border-left-color: var(--sk-amber);
+  background: var(--sk-ephemeral-bg);
+}
+
+.sk-banner-error {
+  border-left-color: var(--sk-danger);
+  background: #fdeef2;
+}
+
+/* mock Achievers platform — deliberately not Slack's chrome. This is the
+   surface the human never had to visit. */
+.sk-ach-modal { width: min(720px, 100%); }
+
+.sk-ach-head {
+  margin: -4px 0 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--sk-line);
+}
+
+.sk-ach-brand {
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+  color: #14304d;
+}
+
+.sk-ach-sub {
+  margin-top: 3px;
+  font-size: 13px;
+  line-height: 1.38;
+  color: var(--sk-text-muted);
+}
+
+.sk-ach-stats {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.sk-ach-stat {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #eef4fb;
+}
+
+.sk-ach-stat-n {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #14304d;
+}
+
+.sk-ach-stat-l {
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.sk-ach-wall {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sk-ach-card {
+  padding: 14px 16px;
+  border: 1px solid var(--sk-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.sk-ach-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sk-ach-card-head .sk-msg-avatar.is-ach {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 13px;
+}
+
+.sk-ach-who { flex: 1; min-width: 0; }
+
+.sk-ach-line {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.sk-ach-meta {
+  margin-top: 1px;
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.sk-ach-points {
+  flex: none;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: #14304d;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sk-ach-value {
+  display: inline-block;
+  margin: 12px 0 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #eef4fb;
+  color: #14304d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sk-ach-msg {
+  font-size: 15px;
+  line-height: 1.46667;
+}
+
+.sk-ach-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--sk-line);
+  font-size: 12px;
+  color: var(--sk-text-muted);
+}
+
+.sk-ach-source-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+/* user switcher */
+.sk-userlist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 12px;
+}
+
+.sk-userrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.sk-userrow:hover { background: var(--sk-hover-bg); }
+.sk-userrow.is-active { background: #e8f5fa; }
+
+.sk-userrow-main { min-width: 0; flex: 1; }
+
+.sk-userrow-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.sk-userrow-hint {
+  display: block;
+  font-size: 13px;
+  color: var(--sk-text-muted);
+}
+
+.sk-userrow-check { color: var(--sk-green); }
+
+/* file viewer */
+.sk-file-purpose {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--sk-text-muted);
+}
+
+.sk-file-body {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(29, 28, 29, 0.13);
+  border-radius: 4px;
+  background: var(--sk-hover-bg);
+  font-family: var(--sk-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* ======================================================= 12  trace panel */
+
+/* Slack's split view is white with hairline-separated rows, not a grey canvas
+   of floating cards. The stage number sits in the avatar slot so each step
+   reads as a message from that agent. */
+.sk-trace {
+  background: #fff;
+  border-left: 1px solid var(--sk-border);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.sk-trace-head {
+  flex: none;
+  min-height: 49px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 20px;
+  border-bottom: 1px solid var(--sk-border);
+}
+
+.sk-trace-heading { min-width: 0; flex: 1; }
+
+.sk-trace-title {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.33;
+}
+
+.sk-trace-sub {
+  font-size: 13px;
+  line-height: 1.38;
+  color: var(--sk-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sk-trace-x {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  color: var(--sk-text-muted);
+}
+
+.sk-trace-x svg { width: 18px; height: 18px; fill: currentColor; }
+.sk-trace-x:hover { background: var(--sk-hover-bg); color: var(--sk-text); }
+
+#traceBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 24px;
+}
+
+.sk-stage {
+  position: relative;
+  padding: 12px 16px 14px 68px;
+  border-bottom: 1px solid var(--sk-line);
+}
+
+.sk-stage-num {
+  position: absolute;
+  left: 16px;
+  top: 12px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: var(--sk-text-muted);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.sk-stage.is-pass .sk-stage-num { background: var(--sk-green); }
+.sk-stage.is-stop .sk-stage-num { background: var(--sk-danger); }
+.sk-stage.is-wait .sk-stage-num { background: var(--sk-amber); }
+.sk-stage.is-info .sk-stage-num { background: var(--sk-aubergine); }
+
+.sk-stage-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.sk-stage-agent { font-size: 15px; font-weight: 900; }
+
+.sk-stage-phase,
+.sk-stage-status { font-size: 12px; color: var(--sk-text-muted); }
+
+.sk-stage-status {
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: rgba(29, 28, 29, 0.06);
+  font-weight: 700;
+}
+
+.sk-stage.is-pass .sk-stage-status { background: #e4f2ec; color: #0f5c46; }
+.sk-stage.is-stop .sk-stage-status { background: #fdeef2; color: #a3123f; }
+.sk-stage.is-wait .sk-stage-status { background: var(--sk-ephemeral-bg); color: #8a5a0b; }
+
+.sk-stage .sk-field-label {
+  margin: 10px 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sk-text-muted);
+}
+
+.sk-decision {
+  font-size: 15px;
+  line-height: 1.46667;
+  overflow-wrap: break-word;
+}
+
+.sk-reads { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* Slack's only monospace treatment is inline code, so the file chips borrow it
+   rather than inventing a breadcrumb style. */
+.sk-file-chip {
+  padding: 1px 5px;
+  border: 1px solid rgba(29, 28, 29, 0.13);
+  border-radius: 3px;
+  background: var(--sk-hover-bg);
+  font-family: var(--sk-mono);
+  font-size: 12px;
+  color: var(--sk-danger);
+}
+
+.sk-file-chip:hover { background: #efefef; }
+
+.sk-conf {
+  height: 6px;
+  margin: 8px 0 2px;
+  border-radius: 3px;
+  background: rgba(29, 28, 29, 0.08);
+  overflow: hidden;
+}
+
+.sk-conf-bar { height: 100%; }
+
+.sk-conf-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--sk-green);
+}
+
+.sk-stage.is-stop .sk-conf-fill { background: var(--sk-danger); }
+.sk-stage.is-wait .sk-conf-fill { background: var(--sk-amber); }
+
+.sk-detail,
+.sk-output {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sk-detail-row,
+.sk-output-row {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.sk-detail-row > :first-child,
+.sk-output-row > :first-child {
+  flex: 0 0 92px;
+  font-weight: 700;
+  color: var(--sk-text-muted);
+}
+
+.sk-detail-row > :last-child,
+.sk-output-row > :last-child {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.sk-output {
+  padding: 8px 10px;
+  border: 1px solid var(--sk-line);
+  border-radius: 4px;
+  background: var(--sk-hover-bg);
+}
+
+.sk-empty {
+  padding: 24px 20px;
+  font-size: 15px;
+  line-height: 1.46667;
+  color: var(--sk-text-muted);
+}
+
+.sk-empty-icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--sk-hover-bg);
+  color: var(--sk-text-muted);
+}
+
+.sk-empty-icon svg { width: 22px; height: 22px; }
+
+.sk-empty .sk-field-label {
+  margin: 16px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sk-text-muted);
+}
+
+/* ====================================================== 13  eval console */
+
+.sk-eval-section { margin-bottom: 24px; }
+
+.sk-eval-section > .sk-field-label {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--sk-border);
+}
+
+.sk-eval-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--sk-line);
+  font-size: 15px;
+}
+
+.sk-eval-row:last-child { border-bottom: 0; }
+
+.sk-eval-note {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.38;
+  color: var(--sk-text-muted);
+}
+
+.sk-eval-miss { margin-top: 8px; }
+
+.sk-pill {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  background: rgba(29, 28, 29, 0.06);
+  color: var(--sk-text-muted);
+}
+
+.sk-pill-pass { background: #e4f2ec; color: #0f5c46; }
+.sk-pill-fail { background: #fdeef2; color: #a3123f; }
+/* Deliberately not red. A model-backed case with no API key has not failed;
+   it has not run. Colouring that as a failure teaches you to ignore red. */
+.sk-pill-skip { background: var(--sk-hover-bg); color: var(--sk-text-muted); }
+
+/* ======================================================== 14  responsive */
+
+@media (max-width: 1180px) {
+  .sk-body {
+    grid-template-columns: var(--sk-rail-w) 220px minmax(360px, 1fr) 340px;
+  }
+  .sk-rail-label { display: none; }
+  .sk-rail-btn { width: 44px; padding: 4px 0; }
+}
+
+@media (max-width: 940px) {
+  .sk-body {
+    grid-template-columns: var(--sk-rail-w) minmax(360px, 1fr) 320px;
+  }
+  .sk-sidebar { display: none; }
+  .sk-topbar { grid-template-columns: auto minmax(0, 1fr) auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
